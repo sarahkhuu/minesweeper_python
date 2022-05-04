@@ -114,15 +114,17 @@ class MyAI( AI ):
 
 		# rule of thumb
 		if EffectiveLabel(self.__lastX, self.__lastY) == NumUnmarkedNeighbors(self.__lastX, self.__lastY):
-			return Action(2, coordx, coordy)
-
+			self.FlagAdjacent(self.__lastX, self.__lastY)
+			
 		if EffectiveLabel(self.__lastX, self.__lastY) == 0:
-			next_tile = getCoveredAdjacent(self.__lastX, self.__lastY)
-			lastX = next_tile[0]
-			lastY = next_tile[1]
-			return Action(1, next_tile[0], next_tile[1])
-		
 
+			safe_neighbors = unmarkedNeighbors(self.__lastX, self.__lastY)
+			for neighbor in safe_neighbors:
+				frontier[neighbor] = self.board[neighbor[0]][neighbor[1]]
+			frontier.pop(safe_neighbors[0])
+			next_x = safe_neighbors[0][0]
+			next_y = safe_neighbors[0][1]
+			return Action(1, next_x, next_Y)
 
 		
 		########################################################################
@@ -132,10 +134,18 @@ class MyAI( AI ):
 	# Effective Label = Label - NumMarkedNeighbors
 	def EffectiveLabel(self, x, y):
 		return self.board[x][y][1]
-		
 
 	def NumUnmarkedNeighbors(self, x, y):
 		return self.board[x][y][2]
+
+	def FlagAdjacent(self, col, row):
+		"""after flagging a tile, update adjacent uncovered tile's effective label accordingly"""
+		for x in [col-1, col, col+1]:
+			for y in [row-1, row, row+1]:
+				if (x >= 0 and y>= 0) and (x < self.__colDimension and y < self.__rowDimension)
+				and (x != colX or y != rowY) and (self.board[x][y][1] != None):
+					self._updateEffectiveLabel(x, y)
+		
 
 	def _updateNeighbors(self, colX, rowY):
 		""" updates (colX, rowY)'s neighbors' adjacent covered tile number """
@@ -153,9 +163,21 @@ class MyAI( AI ):
 		""" decreases the internal adjacent covered tile counter by one"""
 		self.board[y][x][2] -= 1
 
+	def _updateEffectiveLabel(self, x, y):
+		"""decrease effective label by 1"""
+		self.board[x][y][1] -= 1
+
 	
-	# def getCoveredAdjacent(tile) -> (x, y):
-	# 	pass
+	def unmarkedNeighbors(self, colX, rowY):
+		neighbors = list()
+		for x in [colX-1, colX, colX+1]: 
+			for y in [rowY-1, rowY, rowY+1]:
+				if (x >= 0 and y >= 0) and (x < self.__colDimension and 
+				y < self.__rowDimension) and (x != colX or y != rowY):
+					if (self.board[x][y][0] == '*'):
+						neighbors.append((x, y))
+
+		return neighbors
 	
 	def UpdateBoard(tile):
 		pass
