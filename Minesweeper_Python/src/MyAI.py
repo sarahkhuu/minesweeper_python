@@ -56,9 +56,6 @@ class MyAI( AI ):
 					row.append(['*', None, 8]) # numCovered = 8
 			self.board.append(row)
 
-		# update first uncovered tile's efffective label
-		self.board[startY][startX][1] = 0
-
 		self.coveredTilesLeft -= 1
 		
 
@@ -78,7 +75,10 @@ class MyAI( AI ):
 
 		# update board (previous getAction label)
 		self.board[self.__lastY][self.__lastX][0] = number
-		self.board[self.__lastY][self.__lastX][1] = number
+
+		# get number marked neigbors
+		self.board[self.__lastY][self.__lastX][1] = number 
+		- self._numMarkedNeighbors(self.__lastX, self.__lastY)
 
 		# update neighbor's numCovered (from previous UNCOVER)
 		self._updateNeighbors(self.__lastX, self.__lastY, number)
@@ -199,6 +199,18 @@ class MyAI( AI ):
 	
 	def UpdateBoard(tile):
 		pass
+
+	def _numMarkedNeighbors(self, colX, rowY) -> int:
+		"""returns number of neighbors with M mine """
+		count = 0
+		for x in [colX-1, colX, colX+1]: 
+			for y in [rowY-1, rowY, rowY+1]:
+				if (x >= 0 and y >= 0) and (x < self.__colDimension and 
+				y < self.__rowDimension) and (x != colX or y != rowY):
+					if self.board[y][x][0] == 'M':
+						count += 1
+		return count
+
 
 	def _view(self) -> None:
 		"""prints board with row and col index 1 less than game board"""
