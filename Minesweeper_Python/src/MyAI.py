@@ -144,7 +144,8 @@ class MyAI( AI ):
 	def _updateNeighbors(self, colX, rowY):
 		for x in [colX-1, colX, colX+1]: 
 			for y in [rowY-1, rowY, rowY+1]:
-				if (x >= 0 and y >= 0) and (x != colX or y != rowY):
+				if (x >= 0 and y >= 0) and (x < self.__colDimension and 
+				y < self.__rowDimension) and (x != colX or y != rowY):
 					self._updateAdjacentTileNum(x, y)
 	
 	def _updateAdjacentTileNum(self, x, y):
@@ -158,8 +159,22 @@ class MyAI( AI ):
 	def UpdateBoard(tile):
 		pass
 
-	def _view(self):
-		i = self.__rowDimension
+	def _view(self) -> None:
+		"""prints board with row and col index 1 less than game board"""
+		i = self.__rowDimension - 1
 		for row in reversed(self.board):
-			print('{i}: {row}'.format(i = i, row = row))
+			print('{i}'.format(i = i), end = '|\t')
+			for x in row:
+				if x[1] == None:
+					print('{a}: :{c}'.format(a = x[0], c = x[2]), end = '\t')
+				else:
+					print('{a}:{b}:{c}'.format(a = x[0], b = x[1], c = x[2]), end = '\t')
+			print(end = '\n')
 			i -= 1
+		for col in range(self.__colDimension):
+			if col == 0:
+				print('\t  {col}'.format(col = col), end='\t')
+			else:
+				print('  {col}'.format(col = col), end='\t')
+		print(end = '\n')
+			
