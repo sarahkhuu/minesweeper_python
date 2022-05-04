@@ -16,7 +16,6 @@ from AI import AI
 from Action import Action
 import time
 import random
-from collections import deque
 
 totalTime = 5 * 60.0 		# seconds allowed for one game
 totalTimeElapsed = 0.0
@@ -39,7 +38,6 @@ class MyAI( AI ):
 		self.__lastY = startY	# y = row coordinate
 		self.__frontier = {}	# dictionary (x,y):[a,b,c]
 		self.__safe = {}		# dictionary (x,y):[a,b,c]
-		self.__frontierD = deque()
 
 		# */M/n : Effective Label : # adjacent covered/unmarked tiles
 		# * = Covered/Unmarked / M = Mine(Covered/Marked) / n = label(Uncovered)
@@ -57,7 +55,6 @@ class MyAI( AI ):
 			self.board.append(row)
 
 		self.coveredTilesLeft -= 1
-		
 
 		########################################################################
 		#							YOUR CODE ENDS							   #
@@ -73,16 +70,8 @@ class MyAI( AI ):
 		if self.coveredTilesLeft <= self.totalMines:
 			return Action(AI.Action.LEAVE)
 
-		# update board (previous getAction label)
-		self.board[self.__lastY][self.__lastX][0] = number
-
-		# get number marked neigbors
-		self.board[self.__lastY][self.__lastX][1] = number 
-		- self._numMarkedNeighbors(self.__lastX, self.__lastY)
-
-		# update neighbor's numCovered (from previous UNCOVER)
-		self._updateNeighbors(self.__lastX, self.__lastY, number)
-		self._view()
+		# update board (previous getAction result)
+		self._updateBoard(self.__lastX, self.__lastY, number)
 
 		# rule of thumb
 		if self.EffectiveLabel(self.__lastX, self.__lastY) == self.NumUnmarkedNeighbors(self.__lastX, self.__lastY):
@@ -118,7 +107,6 @@ class MyAI( AI ):
 				x, y = self.__safe.popitem()[0]
 			else:
 				x, y = self.__frontier.popitem()[0]
-				# x, y = self.__frontierD.popleft()[0]
 			 
 			self.coveredTilesLeft -= 1
 
@@ -174,8 +162,6 @@ class MyAI( AI ):
 						if self.__safe.get((x,y)) == None:
 							if self.__frontier.get((x,y)) == None and self.board[y][x][0] == '*':
 								self.__frontier.update({(x,y):self.board[y][x]})
-							# if not([(x,y),[self.board[y][x]]] in self.__frontierD)  and self.board[y][x][0] == '*':
-								# self.__frontierD.append([(x,y),[self.board[y][x]]])
 		# print(self.__frontier)
 	
 	def _updateAdjacentTileNum(self, x, y):
@@ -197,8 +183,20 @@ class MyAI( AI ):
 
 		return neighbors
 	
-	def UpdateBoard(tile):
-		pass
+	def _updateBoard(self, x, y, number) -> None:
+		"""update board with previous uncover of x, y tile"""
+		# update label
+		self.board[self.__lastY][self.__lastX][0] = number
+		
+		# update effective label
+		self.board[self.__lastY][self.__lastX][1] = number 
+		- self._numMarkedNeighbors(self.__lastX, self.__lastY)
+
+		# update neighbor's numCovered (following UNCOVER)
+		self._updateNeighbors(self.__lastX, self.__lastY, number)
+		self._view()
+
+		
 
 	def _numMarkedNeighbors(self, colX, rowY) -> int:
 		"""returns number of neighbors with M mine """
