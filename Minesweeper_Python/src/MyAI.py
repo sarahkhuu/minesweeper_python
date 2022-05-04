@@ -54,13 +54,13 @@ class MyAI( AI ):
 					row.append(['*', None, 8]) # numCovered = 8
 			self.board.append(row)
 
-		# label first uncovered tile 0:0:numCovered
-		# self.board[startY][startX][0] = 0  (is updated in first getAction)
+		# update first uncovered tile's efffective label
 		self.board[startY][startX][1] = 0
 
 		# update neighbor's numCovered!!
+		self._updateNeighbors(startX, startY)
 		print()
-		self.__view()
+		self._view()
 
 		self.coveredTilesLeft -= 1
 		
@@ -85,7 +85,7 @@ class MyAI( AI ):
 
 		# update board (previous getAction label)
 		self.board[self.__lastY][self.__lastX][0] = number
-		print(self.__view())
+		print(self._view())
 		
 		global totalTimeElapsed 
 		remainingTime = totalTime - totalTimeElapsed
@@ -141,8 +141,16 @@ class MyAI( AI ):
 	def NumUnmarkedNeighbors(x):
 		pass
 
-	# def __updateNeighbors__(x, y):
-	# 	for x in range(x)
+	def _updateNeighbors(self, colX, rowY):
+		for x in [colX-1, colX, colX+1]: 
+			for y in [rowY-1, rowY, rowY+1]:
+				if (x >= 0 and y >= 0) and (x != colX or y != rowY):
+					self._updateAdjacentTileNum(x, y)
+	
+	def _updateAdjacentTileNum(self, x, y):
+		""" decreases the internal adjacent covered tile counter by one"""
+		self.board[y][x][2] -= 1
+
 	
 	# def getUncoveredAdjacent(tile) -> (x, y):
 	# 	pass
@@ -150,7 +158,7 @@ class MyAI( AI ):
 	def UpdateBoard(tile):
 		pass
 
-	def __view(self):
+	def _view(self):
 		i = self.__rowDimension
 		for row in reversed(self.board):
 			print('{i}: {row}'.format(i = i, row = row))
