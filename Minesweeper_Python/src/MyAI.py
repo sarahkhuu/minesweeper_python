@@ -16,6 +16,7 @@ from AI import AI
 from Action import Action
 import time
 import random
+from queue import PriorityQueue
 
 totalTime = 5.0 		# time allowed for one game
 totalTimeElapsed = 0.0
@@ -36,7 +37,8 @@ class MyAI( AI ):
 		self.board = list() 	# list of list of lists
 		self.__lastX = startX	# x = column coordinate
 		self.__lastY = startY	# y = row coordinate
-		self.__frontier = {}		# dictionary (x,y):[a,b,c]
+		self.__frontier = {}	# dictionary (x,y):[a,b,c]
+		self.__frontierQ = PriorityQueue()
 
 		# */M/n : Effective Label : # adjacent covered/unmarked tiles
 		# * = Covered/Unmarked / M = Mine(Covered/Marked) / n = label(Uncovered)
@@ -97,6 +99,7 @@ class MyAI( AI ):
 			# CHANGE THIS:
 			action = AI.Action(1)
 			x, y = self.__frontier.popitem()[0]
+			 
 			self.coveredTilesLeft -= 1
 
 			self.__lastX = x
