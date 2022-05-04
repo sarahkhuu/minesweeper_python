@@ -14,7 +14,7 @@
 
 from AI import AI
 from Action import Action
-from time import time
+import time
 import random
 
 totalTime = 5.0 # time allowed for one game
@@ -64,21 +64,40 @@ class MyAI( AI ):
 		########################################################################
 		#							YOUR CODE BEGINS						   #
 		########################################################################
-		# update board
-		self.board[self.__lastX][self.__lastY][0] = number
-
-		# exit condition
+		# exit condition (FLAG OR UNCOVERED?)
 		if self.flaggedTiles == self.totalMines:
 			return Action(AI.Action.LEAVE)
 		
 		if self.coveredTilesLeft <= self.totalMines:
 			return Action(AI.Action.LEAVE)
+
+		# update board
+		self.board[self.__lastX][self.__lastY][0] = number
 		
-		action = AI.Action(random.randrange(len(AI.Action)))
-		x = random.randrange(self.__colDimension)
-		y = random.randrange(self.__rowDimension)
-		self.coveredTilesLeft += 1
-		return Action(action, x, y)
+		global totalTimeElapsed 
+		remainingTime = totalTime - totalTimeElapsed
+		if remainingTime < 0.1:
+			# random move
+			action = AI.Action(random.randrange(len(AI.Action)))
+			x = random.randrange(self.__colDimension)
+			y = random.randrange(self.__rowDimension)
+			self.coveredTilesLeft += 1
+			return Action(action, x, y)
+		else :
+			timeStart = time.time()
+
+			# CHANGE THIS:
+			action = AI.Action(random.randrange(len(AI.Action)))
+			x = random.randrange(self.__colDimension)
+			y = random.randrange(self.__rowDimension)
+			self.coveredTilesLeft += 1
+
+			timeEnd = time.time()
+			timeDifference = timeStart - timeEnd
+			totalTimeElapsed += timeDifference	# update time used for call
+
+			return Action(action, x, y)
+
 
 		# rule of thumb
 		if EffectiveLabel(tile) == NumUnmarkedNeighbors(tile):
