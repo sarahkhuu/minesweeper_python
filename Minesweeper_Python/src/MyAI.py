@@ -15,8 +15,11 @@
 from AI import AI
 from Action import Action
 from time import time
+import random
 
-time = 0
+totalTime = 5.0 # time allowed for one game
+totalTimeElapsed = 0.0
+
 class MyAI( AI ):
 
 	def __init__(self, rowDimension, colDimension, totalMines, startX, startY):
@@ -28,16 +31,26 @@ class MyAI( AI ):
 		self.__colDimension = colDimension
 		self.totalMines = totalMines
 		self.flaggedTiles = 0
+		self.coveredTilesLeft = rowDimension * colDimension
 		self.board = list() #list of list of tuples
-		self.lastX = startX
-		self.lastY = startY
-		#initialize board to all 0's
-		for i in range(rowDimension):
-			board.append([(*, 0, 0)] * colDimension)
+		self.__lastX = startX
+		self.__lastY = startY
 
-		board[startX][startY][0] = 0
-		board[startX][startY][1] = 0
-		board[startX][startY][2] = 8
+		# */M/n : Effective Label : # adjacent covered/unmarked tiles
+		# * = Covered/Unmarked
+		# M = Mine (Covered/Marked)
+		# n = label (Uncovered)
+		# Effective Label = Label - NumMarkedNeighbors
+		# initialize board to all *:0:0
+		for i in range(rowDimension):
+			self.board.append([['*', 0, 0]] * colDimension)
+
+		# label first tile 0:0:8
+		self.board[startX][startY][0] = 0
+		self.board[startX][startY][1] = 0
+		self.board[startX][startY][2] = 8
+
+		self.coveredTilesLeft -= 1
 		
 
 
@@ -51,14 +64,23 @@ class MyAI( AI ):
 		########################################################################
 		#							YOUR CODE BEGINS						   #
 		########################################################################
-		#update board
-		board[lastX][lastY][0] = number
+		# update board
+		self.board[self.__lastX][self.__lastY][0] = number
 
-		#exit condition
-		if self.flaggedTiles = self.totalMines:
+		# exit condition
+		if self.flaggedTiles == self.totalMines:
 			return Action(AI.Action.LEAVE)
+		
+		if self.coveredTilesLeft <= self.totalMines:
+			return Action(AI.Action.LEAVE)
+		
+		action = AI.Action(random.randrange(len(AI.Action)))
+		x = random.randrange(self.__colDimension)
+		y = random.randrange(self.__rowDimension)
+		self.coveredTilesLeft += 1
+		return Action(action, x, y)
 
-		#rule of thumb
+		# rule of thumb
 		if EffectiveLabel(tile) == NumUnmarkedNeighbors(tile):
 			return Action(2, coordx, coordy)
 
@@ -81,8 +103,8 @@ class MyAI( AI ):
 	def NumUnmarkedNeighbors(x):
 		pass
 	
-	def getUncoveredAdjacent(tile) -> (x, y):
-		pass
+	# def getUncoveredAdjacent(tile) -> (x, y):
+	# 	pass
 	
 	def UpdateBoard(tile):
 		pass
