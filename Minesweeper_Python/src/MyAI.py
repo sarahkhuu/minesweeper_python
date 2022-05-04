@@ -69,10 +69,7 @@ class MyAI( AI ):
 		########################################################################
 		#							YOUR CODE BEGINS						   #
 		########################################################################
-		# exit condition (FLAG OR UNCOVERED?)
-		if self.flaggedTiles == self.totalMines:
-			return Action(AI.Action.LEAVE)
-		
+		# exit condition
 		if self.coveredTilesLeft <= self.totalMines:
 			return Action(AI.Action.LEAVE)
 
@@ -90,7 +87,7 @@ class MyAI( AI ):
 			action = AI.Action(1)
 			x = random.randrange(self.__colDimension)
 			y = random.randrange(self.__rowDimension)
-			self.coveredTilesLeft += 1
+			self.coveredTilesLeft -= 1
 			self.__lastX = x
 			self.__lastY = y
 			return Action(action, x, y)
@@ -100,7 +97,7 @@ class MyAI( AI ):
 			# CHANGE THIS:
 			action = AI.Action(1)
 			x, y = self.__frontier.popitem()[0]
-			self.coveredTilesLeft += 1
+			self.coveredTilesLeft -= 1
 
 			self.__lastX = x
 			self.__lastY = y
@@ -157,7 +154,7 @@ class MyAI( AI ):
 					# update frontier
 					if self.__frontier.get((x,y)) == None and self.board[y][x][0] == '*':
 						self.__frontier.update({(x,y):self.board[y][x]})
-		print(self.__frontier)
+		# print(self.__frontier)
 	
 	def _updateAdjacentTileNum(self, x, y):
 		""" decreases the internal adjacent covered tile counter by one"""
