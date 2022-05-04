@@ -18,7 +18,7 @@ import time
 import random
 from collections import deque
 
-totalTime = 5 * 60.0 		# time allowed for one game
+totalTime = 5 * 60.0 		# seconds allowed for one game
 totalTimeElapsed = 0.0
 
 class MyAI( AI ):
@@ -38,6 +38,7 @@ class MyAI( AI ):
 		self.__lastX = startX	# x = column coordinate
 		self.__lastY = startY	# y = row coordinate
 		self.__frontier = {}	# dictionary (x,y):[a,b,c]
+		self.__safe = {}		# dictionary (x,y):[a,b,c]
 		self.__frontierD = deque()
 
 		# */M/n : Effective Label : # adjacent covered/unmarked tiles
@@ -79,7 +80,7 @@ class MyAI( AI ):
 		self.board[self.__lastY][self.__lastX][0] = number
 
 		# update neighbor's numCovered (from previous UNCOVER)
-		self._updateNeighbors(self.__lastX, self.__lastY)
+		self._updateNeighbors(self.__lastX, self.__lastY, number)
 		self._view()
 		
 		global totalTimeElapsed 
@@ -98,8 +99,11 @@ class MyAI( AI ):
 
 			# CHANGE THIS:
 			action = AI.Action(1)
-			# x, y = self.__frontier.popitem()[0]
-			x, y = self.__frontierD.popleft()[0]
+			if self.__safe:
+				x, y = self.__safe.popitem()[0]
+			else:
+				x, y = self.__frontier.popitem()[0]
+				# x, y = self.__frontierD.popleft()[0]
 			 
 			self.coveredTilesLeft -= 1
 
@@ -148,18 +152,30 @@ class MyAI( AI ):
 					self._updateEffectiveLabel(x, y)
 		
 
-	def _updateNeighbors(self, colX, rowY):
+	def _updateNeighbors(self, colX, rowY, number):
 		""" updates (colX, rowY)'s neighbors' adjacent covered tile number """
-		for x in [colX-1, colX, colX+1]: 
-			for y in [rowY-1, rowY, rowY+1]:
-				if (x >= 0 and y >= 0) and (x < self.__colDimension and 
-				y < self.__rowDimension) and (x != colX or y != rowY):
-					self._updateAdjacentTileNum(x, y)
-					# update frontier
-					if self.__frontier.get((x,y)) == None and self.board[y][x][0] == '*':
-						self.__frontier.update({(x,y):self.board[y][x]})
-					if not([(x,y),[self.board[y][x]]] in self.__frontierD)  and self.board[y][x][0] == '*':
-						self.__frontierD.append([(x,y),[self.board[y][x]]])
+		if (number == 0): 	# all neighbors are safe, add to safe
+			for x in [colX-1, colX, colX+1]: 
+				for y in [rowY-1, rowY, rowY+1]:
+					if (x >= 0 and y >= 0) and (x < self.__colDimension and 
+					y < self.__rowDimension) and (x != colX or y != rowY):
+						self._updateAdjacentTileNum(x, y)
+						# update safe dict
+						if self.__safe.get((x,y)) == None and self.board[y][x][0] == '*':
+							self.__safe.update({(x,y):self.board[y][x]})
+
+		else: 	# effective label != 0 add neighbors to frontier
+			for x in [colX-1, colX, colX+1]: 
+				for y in [rowY-1, rowY, rowY+1]:
+					if (x >= 0 and y >= 0) and (x < self.__colDimension and 
+					y < self.__rowDimension) and (x != colX or y != rowY):
+						self._updateAdjacentTileNum(x, y)
+						# update frontier
+						if self.__safe.get((x,y)) == None:
+							if self.__frontier.get((x,y)) == None and self.board[y][x][0] == '*':
+								self.__frontier.update({(x,y):self.board[y][x]})
+							# if not([(x,y),[self.board[y][x]]] in self.__frontierD)  and self.board[y][x][0] == '*':
+								# self.__frontierD.append([(x,y),[self.board[y][x]]])
 		# print(self.__frontier)
 	
 	def _updateAdjacentTileNum(self, x, y):
