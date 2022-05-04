@@ -27,7 +27,7 @@ class MyAI( AI ):
 		########################################################################
 		#							YOUR CODE BEGINS						   #
 		########################################################################
-		print("START: ", startX, startY)
+		# print("START: ", startX, startY)
 		self.__rowDimension = rowDimension
 		self.__colDimension = colDimension
 		self.totalMines = totalMines
@@ -38,9 +38,7 @@ class MyAI( AI ):
 		self.__lastY = startY	# y = row coordinate
 
 		# */M/n : Effective Label : # adjacent covered/unmarked tiles
-		# * = Covered/Unmarked
-		# M = Mine (Covered/Marked)
-		# n = label (Uncovered)
+		# * = Covered/Unmarked / M = Mine(Covered/Marked) / n = label(Uncovered)
 		# Effective Label = Label - NumMarkedNeighbors
 		# initialize board to all *:None:0
 		for y in range(rowDimension):
@@ -57,14 +55,8 @@ class MyAI( AI ):
 		# update first uncovered tile's efffective label
 		self.board[startY][startX][1] = 0
 
-		# update neighbor's numCovered!!
-		self._updateNeighbors(startX, startY)
-		print()
-		self._view()
-
 		self.coveredTilesLeft -= 1
 		
-
 
 		########################################################################
 		#							YOUR CODE ENDS							   #
@@ -85,7 +77,10 @@ class MyAI( AI ):
 
 		# update board (previous getAction label)
 		self.board[self.__lastY][self.__lastX][0] = number
-		print(self._view())
+
+		# update neighbor's numCovered (from previous UNCOVER)
+		self._updateNeighbors(self.__lastX, self.__lastY)
+		self._view()
 		
 		global totalTimeElapsed 
 		remainingTime = totalTime - totalTimeElapsed
@@ -135,13 +130,14 @@ class MyAI( AI ):
 		########################################################################
 
 	# Effective Label = Label - NumMarkedNeighbors
-	def EffectiveLabel(x, y):
+	def EffectiveLabel(self, x, y):
 		pass
 
 	def NumUnmarkedNeighbors(x):
 		pass
 
 	def _updateNeighbors(self, colX, rowY):
+		""" updates (colX, rowY)'s neighbors' adjacent covered tile number """
 		for x in [colX-1, colX, colX+1]: 
 			for y in [rowY-1, rowY, rowY+1]:
 				if (x >= 0 and y >= 0) and (x < self.__colDimension and 
