@@ -36,6 +36,7 @@ class MyAI( AI ):
 		self.board = list() 	# list of list of tuples
 		self.__lastX = startX	# x = column coordinate
 		self.__lastY = startY	# y = row coordinate
+		self.__frontier = {}		# dictionary (x,y):[a,b,c]
 
 		# */M/n : Effective Label : # adjacent covered/unmarked tiles
 		# * = Covered/Unmarked / M = Mine(Covered/Marked) / n = label(Uncovered)
@@ -98,8 +99,7 @@ class MyAI( AI ):
 
 			# CHANGE THIS:
 			action = AI.Action(1)
-			x = random.randrange(self.__colDimension)
-			y = random.randrange(self.__rowDimension)
+			x, y = self.__frontier.popitem()[0]
 			self.coveredTilesLeft += 1
 
 			self.__lastX = x
@@ -143,6 +143,10 @@ class MyAI( AI ):
 				if (x >= 0 and y >= 0) and (x < self.__colDimension and 
 				y < self.__rowDimension) and (x != colX or y != rowY):
 					self._updateAdjacentTileNum(x, y)
+					# update frontier
+					if self.__frontier.get((x,y)) == None and self.board[y][x][0] == '*':
+						self.__frontier.update({(x,y):self.board[y][x]})
+		print(self.__frontier)
 	
 	def _updateAdjacentTileNum(self, x, y):
 		""" decreases the internal adjacent covered tile counter by one"""
