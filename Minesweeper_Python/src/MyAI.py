@@ -33,7 +33,7 @@ class MyAI( AI ):
 		self.totalMines = totalMines
 		self.flaggedTiles = 0
 		self.coveredTilesLeft = rowDimension * colDimension
-		self.board = list() 	# list of list of tuples
+		self.board = list() 	# list of list of lists
 		self.__lastX = startX	# x = column coordinate
 		self.__lastY = startY	# y = row coordinate
 		self.__frontier = {}		# dictionary (x,y):[a,b,c]
@@ -113,11 +113,11 @@ class MyAI( AI ):
 
 
 		# rule of thumb
-		if EffectiveLabel(tile) == NumUnmarkedNeighbors(tile):
+		if EffectiveLabel(self.__lastX, self.__lastY) == NumUnmarkedNeighbors(self.__lastX, self.__lastY):
 			return Action(2, coordx, coordy)
 
-		if EffectiveLabel(tile) == 0:
-			next_tile = getUncoveredAdjacent(tile)
+		if EffectiveLabel(self.__lastX, self.__lastY) == 0:
+			next_tile = getCoveredAdjacent(self.__lastX, self.__lastY)
 			lastX = next_tile[0]
 			lastY = next_tile[1]
 			return Action(1, next_tile[0], next_tile[1])
@@ -131,10 +131,11 @@ class MyAI( AI ):
 
 	# Effective Label = Label - NumMarkedNeighbors
 	def EffectiveLabel(self, x, y):
-		pass
+		return self.board[x][y][1]
+		
 
-	def NumUnmarkedNeighbors(x):
-		pass
+	def NumUnmarkedNeighbors(self, x, y):
+		return self.board[x][y][2]
 
 	def _updateNeighbors(self, colX, rowY):
 		""" updates (colX, rowY)'s neighbors' adjacent covered tile number """
@@ -153,7 +154,7 @@ class MyAI( AI ):
 		self.board[y][x][2] -= 1
 
 	
-	# def getUncoveredAdjacent(tile) -> (x, y):
+	# def getCoveredAdjacent(tile) -> (x, y):
 	# 	pass
 	
 	def UpdateBoard(tile):
