@@ -75,10 +75,25 @@ class MyAI( AI ):
 
 		# update board (previous getAction label)
 		self.board[self.__lastY][self.__lastX][0] = number
+		self.board[self.__lastY][self.__lastX][1] = number
 
 		# update neighbor's numCovered (from previous UNCOVER)
 		self._updateNeighbors(self.__lastX, self.__lastY)
 		self._view()
+
+		# rule of thumb
+		if self.EffectiveLabel(self.__lastX, self.__lastY) == self.NumUnmarkedNeighbors(self.__lastX, self.__lastY):
+			self.FlagAdjacent(self.__lastX, self.__lastY)
+			
+		if self.EffectiveLabel(self.__lastX, self.__lastY) == 0:
+			
+			safe_neighbors = self.unmarkedNeighbors(self.__lastX, self.__lastY)
+			for neighbor in safe_neighbors:
+				self.__frontier[neighbor] = self.board[neighbor[0]][neighbor[1]]
+			self.__frontier.pop(safe_neighbors[0])
+			next_x = safe_neighbors[0][0]
+			next_y = safe_neighbors[0][1]
+			return Action(1, next_x, next_y)
 		
 		global totalTimeElapsed 
 		remainingTime = totalTime - totalTimeElapsed
@@ -109,21 +124,6 @@ class MyAI( AI ):
 			return Action(action, x, y)
 
 
-		# rule of thumb
-		if EffectiveLabel(self.__lastX, self.__lastY) == NumUnmarkedNeighbors(self.__lastX, self.__lastY):
-			self.FlagAdjacent(self.__lastX, self.__lastY)
-			
-		if EffectiveLabel(self.__lastX, self.__lastY) == 0:
-
-			safe_neighbors = unmarkedNeighbors(self.__lastX, self.__lastY)
-			for neighbor in safe_neighbors:
-				frontier[neighbor] = self.board[neighbor[0]][neighbor[1]]
-			frontier.pop(safe_neighbors[0])
-			next_x = safe_neighbors[0][0]
-			next_y = safe_neighbors[0][1]
-			return Action(1, next_x, next_Y)
-
-		
 		########################################################################
 		#							YOUR CODE ENDS							   #
 		########################################################################
@@ -139,8 +139,7 @@ class MyAI( AI ):
 		"""after flagging a tile, update adjacent uncovered tile's effective label accordingly"""
 		for x in [col-1, col, col+1]:
 			for y in [row-1, row, row+1]:
-				if (x >= 0 and y>= 0) and (x < self.__colDimension and y < self.__rowDimension)
-				and (x != colX or y != rowY) and (self.board[x][y][1] != None):
+				if (x >= 0 and y>= 0) and (x < self.__colDimension and y < self.__rowDimension) and (x != col or y != row) and (self.board[x][y][1] != None):
 					self._updateEffectiveLabel(x, y)
 		
 
@@ -164,7 +163,6 @@ class MyAI( AI ):
 		"""decrease effective label by 1"""
 		self.board[x][y][1] -= 1
 
-	
 	def unmarkedNeighbors(self, colX, rowY):
 		neighbors = list()
 		for x in [colX-1, colX, colX+1]: 
