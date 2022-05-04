@@ -16,8 +16,9 @@ from AI import AI
 from Action import Action
 import time
 import random
+from collections import deque
 
-totalTime = 5.0 		# time allowed for one game
+totalTime = 5 * 60.0 		# time allowed for one game
 totalTimeElapsed = 0.0
 
 class MyAI( AI ):
@@ -36,7 +37,8 @@ class MyAI( AI ):
 		self.board = list() 	# list of list of lists
 		self.__lastX = startX	# x = column coordinate
 		self.__lastY = startY	# y = row coordinate
-		self.__frontier = {}		# dictionary (x,y):[a,b,c]
+		self.__frontier = {}	# dictionary (x,y):[a,b,c]
+		self.__frontierD = deque()
 
 		# */M/n : Effective Label : # adjacent covered/unmarked tiles
 		# * = Covered/Unmarked / M = Mine(Covered/Marked) / n = label(Uncovered)
@@ -97,7 +99,7 @@ class MyAI( AI ):
 		
 		global totalTimeElapsed 
 		remainingTime = totalTime - totalTimeElapsed
-		if remainingTime < 0.1:
+		if remainingTime < 3:
 			# random move
 			action = AI.Action(1)
 			x = random.randrange(self.__colDimension)
@@ -111,7 +113,9 @@ class MyAI( AI ):
 
 			# CHANGE THIS:
 			action = AI.Action(1)
-			x, y = self.__frontier.popitem()[0]
+			# x, y = self.__frontier.popitem()[0]
+			x, y = self.__frontierD.popleft()[0]
+			 
 			self.coveredTilesLeft -= 1
 
 			self.__lastX = x
@@ -139,7 +143,8 @@ class MyAI( AI ):
 		"""after flagging a tile, update adjacent uncovered tile's effective label accordingly"""
 		for x in [col-1, col, col+1]:
 			for y in [row-1, row, row+1]:
-				if (x >= 0 and y>= 0) and (x < self.__colDimension and y < self.__rowDimension) and (x != col or y != row) and (self.board[x][y][1] != None):
+				if (x >= 0 and y>= 0) and (x < self.__colDimension and 
+				y < self.__rowDimension) and (x != col or y != row) and (self.board[x][y][1] != None):
 					self._updateEffectiveLabel(x, y)
 		
 
@@ -153,6 +158,8 @@ class MyAI( AI ):
 					# update frontier
 					if self.__frontier.get((x,y)) == None and self.board[y][x][0] == '*':
 						self.__frontier.update({(x,y):self.board[y][x]})
+					if not([(x,y),[self.board[y][x]]] in self.__frontierD)  and self.board[y][x][0] == '*':
+						self.__frontierD.append([(x,y),[self.board[y][x]]])
 		# print(self.__frontier)
 	
 	def _updateAdjacentTileNum(self, x, y):
