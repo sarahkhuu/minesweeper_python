@@ -32,7 +32,6 @@ class MyAI( AI ):
 		self.__rowDimension = rowDimension
 		self.__colDimension = colDimension
 		self.totalMines = totalMines
-		self.flaggedTiles = 0
 		self.coveredTilesLeft = rowDimension * colDimension
 		self.board = list() 	# list of list of lists
 		self.__lastX = startX	# x = column coordinate
@@ -86,16 +85,7 @@ class MyAI( AI ):
 		# rule of thumb
 		if self.EffectiveLabel(self.__lastX, self.__lastY) == self.NumUnmarkedNeighbors(self.__lastX, self.__lastY):
 			self.FlagAdjacent(self.__lastX, self.__lastY)
-			
-		if self.EffectiveLabel(self.__lastX, self.__lastY) == 0:
-			
-			safe_neighbors = self.unmarkedNeighbors(self.__lastX, self.__lastY)
-			for neighbor in safe_neighbors:
-				self.__frontier[neighbor] = self.board[neighbor[0]][neighbor[1]]
-			self.__frontier.pop(safe_neighbors[0])
-			next_x = safe_neighbors[0][0]
-			next_y = safe_neighbors[0][1]
-			return Action(1, next_x, next_y)
+			#flag all adjacent covered tiles as mines
 		
 		global totalTimeElapsed 
 		remainingTime = totalTime - totalTimeElapsed
@@ -134,18 +124,18 @@ class MyAI( AI ):
 
 	# Effective Label = Label - NumMarkedNeighbors
 	def EffectiveLabel(self, x, y):
-		return self.board[x][y][1]
+		return self.board[y][x][1]
 
 	def NumUnmarkedNeighbors(self, x, y):
-		return self.board[x][y][2]
+		return self.board[y][x][2]
 
 	def FlagAdjacent(self, col, row):
-		"""after flagging a tile, update adjacent uncovered tile's effective label accordingly"""
+		"""flag adjacent tiles as mines"""
 		for x in [col-1, col, col+1]:
 			for y in [row-1, row, row+1]:
 				if (x >= 0 and y>= 0) and (x < self.__colDimension and 
-				y < self.__rowDimension) and (x != col or y != row) and (self.board[x][y][1] != None):
-					self._updateEffectiveLabel(x, y)
+				y < self.__rowDimension) and (x != col or y != row) and (self.board[y][x][0] == '*'):
+					self.board[y][x][0] = 'M'
 		
 
 	def _updateNeighbors(self, colX, rowY):
@@ -168,7 +158,7 @@ class MyAI( AI ):
 
 	def _updateEffectiveLabel(self, x, y):
 		"""decrease effective label by 1"""
-		self.board[x][y][1] -= 1
+		self.board[y][x][1] -= 1
 
 	def unmarkedNeighbors(self, colX, rowY):
 		neighbors = list()
@@ -176,7 +166,7 @@ class MyAI( AI ):
 			for y in [rowY-1, rowY, rowY+1]:
 				if (x >= 0 and y >= 0) and (x < self.__colDimension and 
 				y < self.__rowDimension) and (x != colX or y != rowY):
-					if (self.board[x][y][0] == '*'):
+					if (self.board[y][x][0] == '*'):
 						neighbors.append((x, y))
 
 		return neighbors
