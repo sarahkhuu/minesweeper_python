@@ -41,21 +41,21 @@ class MyAI( AI ):
 		# */M/n : Effective Label : # adjacent covered/unmarked tiles
 		# * = Covered/Unmarked / M = Mine(Covered/Marked) / n = label(Uncovered)
 		# Effective Label = Label - NumMarkedNeighbors
-		# initialize board to all *:None:0
+		# initialize board to *:None:#
 		for y in range(rowDimension):
 			row = []
 			for x in range(colDimension):
 				if (y == 0 or y == rowDimension - 1) and (
 					x == 0 or x == colDimension -1):
-					row.append(['*', None, 3]) # numCovered = 3
+					row.append(['*', None, 3]) 	# numCovered = 3
 				elif y == 0 or y == rowDimension - 1 or x == 0 or \
 					x == colDimension -1:
-					row.append(['*', None, 5]) # numCovered = 5
+					row.append(['*', None, 5]) 	# numCovered = 5
 				else: 
-					row.append(['*', None, 8]) # numCovered = 8
+					row.append(['*', None, 8]) 	# numCovered = 8
 			self.board.append(row)
 
-		self.coveredTilesLeft -= 1
+		self.coveredTilesLeft -= 1				# decrement tile count
 
 		########################################################################
 		#							YOUR CODE ENDS							   #
@@ -71,7 +71,7 @@ class MyAI( AI ):
 		if self.coveredTilesLeft <= self.totalMines:
 			return Action(AI.Action.LEAVE)
 
-		# update board (previous getAction result)
+		# update board (using previous getAction result)
 		self._updateBoard(self.__lastX, self.__lastY, number)
 		# print("Covered Tiles left: ", self.coveredTilesLeft)
 
@@ -79,7 +79,7 @@ class MyAI( AI ):
 		if self.getEffectiveLabel(self.__lastX, self.__lastY) == \
 			self.getNumUnmarkedNeighbors(self.__lastX, self.__lastY):
 			self.FlagAdjacent(self.__lastX, self.__lastY)
-			#flag all adjacent covered tiles as mines
+			# flag all adjacent covered tiles as mines
 		
 		global totalTimeElapsed 
 		remainingTime = totalTime - totalTimeElapsed
@@ -95,7 +95,7 @@ class MyAI( AI ):
 		else :
 			timeStart = time.time()
 
-			# CHANGE THIS:
+			# next uncover
 			action = AI.Action(1)
 			if self.__safe:
 				x, y = self.__safe.popitem()[0]
@@ -218,8 +218,9 @@ class MyAI( AI ):
 						y < self.__rowDimension) and (x != col or y != row):
 						self._updateAdjacentTileNum(x, y)
 						self._checkRule(x,y)
-						# update safe dict
-						if not ((x,y) in self.__safe) and self.getLabel(x,y) == '*':
+						# add (x,y) to safe dict
+						if ((x,y) not in self.__safe and 
+							self.getLabel(x,y) == '*'):
 							self.__safe.update({(x,y):self.board[y][x]})
 		else: 	# effective label != 0 add neighbors to frontier
 			for x in [col-1, col, col+1]: 
@@ -228,10 +229,10 @@ class MyAI( AI ):
 						y < self.__rowDimension) and (x != col or y != row):
 						self._updateAdjacentTileNum(x, y)
 						self._checkRule(x,y)
-						# update frontier
-						if not ((x,y) in self.__safe):
-							if not ((x,y) in self.__frontier) and\
-								self.getLabel(x,y) == '*':
+						# add (x,y) to frontier
+						if (x,y) not in self.__safe:
+							if ((x,y) not in self.__frontier and
+								self.getLabel(x,y) == '*'):
 								self.__frontier.update({(x,y):self.board[y][x]})
 		# print(self.__frontier)
 	
@@ -311,7 +312,8 @@ class MyAI( AI ):
 				if x[1] == None:
 					print('{a}: :{c}'.format(a = x[0], c = x[2]), end = '\t')
 				else:
-					print('{a}:{b}:{c}'.format(a = x[0], b = x[1], c = x[2]), end = '\t')
+					print('{a}:{b}:{c}'.format(a = x[0], b = x[1], c = x[2]),
+						end = '\t')
 			print(end = '\n')
 			i -= 1
 		for col in range(self.__colDimension):
