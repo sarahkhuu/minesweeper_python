@@ -234,7 +234,9 @@ class MyAI( AI ):
 		print(self.__frontier)
 	
 	def _effectiveZero(self, col: int, row: int, uncover = False) -> None:
-		"""Update board after tile (col, row)'s effective label is 0
+		"""
+		Update board after tile (col, row)'s effective label is 0
+		adds safe tiles to safe dictionary and removes from frontier
 			input - 
 				col (int): column index
 				row (int): row index
@@ -251,6 +253,9 @@ class MyAI( AI ):
 						# add (x, y) to safe dict
 						if (x, y) not in self.__safe and self.getLabel(x, y) == '*':
 							self.__safe.update({(x, y):self.board[y][x]})
+						# remove (x, y) from frontier dict
+						if (x, y) in self.__frontier:
+							self.__frontier.pop((x, y))
 		else:
 			for x in [col-1, col, col+1]: 
 				for y in [row-1, row, row+1]:
@@ -259,6 +264,9 @@ class MyAI( AI ):
 						# add (x, y) to safe dict
 						if (x, y) not in self.__safe and self.getLabel(x, y) == '*':
 							self.__safe.update({(x, y):self.board[y][x]})
+						# remove (x, y) from frontier dict
+						if (x, y) in self.__frontier:
+							self.__frontier.pop((x, y))
 
 
 	
@@ -348,6 +356,12 @@ class MyAI( AI ):
 						end = '\t')
 			print(end = '\n')
 			i -= 1
+		for col in range(self.__colDimension):
+			if col == 0:
+				print('\t ▔▔▔', end='\t')
+			else:
+				print(' ▔▔▔', end='\t')
+		print(end = '\n')
 		for col in range(self.__colDimension):
 			if col == 0:
 				print('\t  {col}'.format(col = col), end='\t')
