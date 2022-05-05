@@ -150,7 +150,7 @@ class MyAI( AI ):
 		"""
 		return self.board[y][x][1]
 
-	def getNumUnmarkedNeighbors(self, x, y):
+	def getNumUnmarkedNeighbors(self, x: int, y: int) -> int:
 		""" 
 		get number of Unmarked Neighbor helper function
 			input - 
@@ -161,14 +161,24 @@ class MyAI( AI ):
 		"""
 		return self.board[y][x][2]
 
-	def _checkRule(self, x, y):
-		"""checks if effectivelabel(x) = numUnMarkedNeighbors on last x, y"""
+	def _checkRule(self, x: int, y: int) -> None:
+		"""
+		checks if effectivelabel(x) = numUnMarkedNeighbors on last x, y
+			input - 
+				x: int column index
+				y: int row index
+		"""
 		if self.getEffectiveLabel(x, y) == self.getNumUnmarkedNeighbors(x, y):
 			self.FlagAdjacent(x, y)
 			#flag all adjacent covered tiles as mines
 
-	def FlagAdjacent(self, col, row):
-		"""flag adjacent tiles as mines"""
+	def FlagAdjacent(self, col: int, row: int) -> None:
+		"""
+		flag adjacent tiles as mines, label with 'M'
+			input - 
+				col: int column index
+				row: int row index
+		"""
 		for x in [col-1, col, col+1]:
 			for y in [row-1, row, row+1]:
 				if (x >= 0 and y>= 0) and (x < self.__colDimension and
@@ -178,8 +188,13 @@ class MyAI( AI ):
 					self.board[y][x][1] = None
 					self._updateFlagNeighbors(x,y)
 
-	def _updateFlagNeighbors(self, col, row) -> None:
-		""" Update Effective label of flagged 'M' Tile"""
+	def _updateFlagNeighbors(self, col: int, row: int) -> None:
+		""" 
+		update effective label of flagged 'M' Tile
+			input - 
+				col: int column index
+				row: int row index
+		"""
 		for x in [col-1, col, col+1]:
 			for y in [row-1, row, row+1]:
 				if (x >= 0 and y>= 0) and (x < self.__colDimension and 
@@ -188,23 +203,29 @@ class MyAI( AI ):
 					self._updateEffectiveLabel(x,y)
 
 
-	def _updateNeighbors(self, colX, rowY, number) -> None:
-		""" updates (colX, rowY)'s neighbors' adjacent covered tile number """
+	def _updateNeighbors(self, col: int, row: int, number: int) -> None:
+		""" 
+		updates (colX, rowY)'s neighbors' adjacent covered tile number 
+			input - 
+				col: int column index
+				row: int row index
+				number: int uncovered label 
+		"""
 		if (number == 0): 	# all neighbors are safe, add to safe
-			for x in [colX-1, colX, colX+1]: 
-				for y in [rowY-1, rowY, rowY+1]:
+			for x in [col-1, col, col+1]: 
+				for y in [row-1, row, row+1]:
 					if (x >= 0 and y >= 0) and (x < self.__colDimension and 
-						y < self.__rowDimension) and (x != colX or y != rowY):
+						y < self.__rowDimension) and (x != col or y != row):
 						self._updateAdjacentTileNum(x, y)
 						self._checkRule(x,y)
 						# update safe dict
 						if not ((x,y) in self.__safe) and self.getLabel(x,y) == '*':
 							self.__safe.update({(x,y):self.board[y][x]})
 		else: 	# effective label != 0 add neighbors to frontier
-			for x in [colX-1, colX, colX+1]: 
-				for y in [rowY-1, rowY, rowY+1]:
+			for x in [col-1, col, col+1]: 
+				for y in [row-1, row, row+1]:
 					if (x >= 0 and y >= 0) and (x < self.__colDimension and 
-						y < self.__rowDimension) and (x != colX or y != rowY):
+						y < self.__rowDimension) and (x != col or y != row):
 						self._updateAdjacentTileNum(x, y)
 						self._checkRule(x,y)
 						# update frontier
@@ -215,11 +236,21 @@ class MyAI( AI ):
 		# print(self.__frontier)
 	
 	def _updateAdjacentTileNum(self, x:int, y:int) -> None:
-		""" decreases the internal adjacent covered tile counter by one"""
+		"""
+		decrement the internal adjacent covered tile counter
+			input - 
+				x: int column index
+				y: int row index
+		"""
 		self.board[y][x][2] -= 1
 
 	def _updateEffectiveLabel(self, x: int, y:int) -> None:
-		"""decrease effective label by 1"""
+		"""
+		decrement effective label by 1
+			input - 
+				x: int column index
+				y: int row index
+		"""
 		if self.board[y][x][1]:
 			self.board[y][x][1] -= 1
 
@@ -235,7 +266,13 @@ class MyAI( AI ):
 		return neighbors
 	
 	def _updateBoard(self, x: int, y: int, number: int) -> None:
-		"""update board with previous uncover of x, y tile"""
+		"""
+		update board with previous uncover of x, y tile
+			input - 
+				x: int column index
+				y: int row index
+				number: int uncovered label
+		"""
 		# update label
 		self.board[y][x][0] = number
 		
@@ -249,13 +286,20 @@ class MyAI( AI ):
 
 		
 
-	def _numMarkedNeighbors(self, colX: int, rowY: int) -> int:
-		"""returns number of neighbors with M mine """
+	def _numMarkedNeighbors(self, col: int, row: int) -> int:
+		"""
+		calculate number of neighbors with M mine
+			input - 
+				col: int column index
+				row: int row index
+			return -
+				count: int number of neighbor mines
+		"""
 		count = 0
-		for x in [colX-1, colX, colX+1]: 
-			for y in [rowY-1, rowY, rowY+1]:
+		for x in [col-1, col, col+1]: 
+			for y in [row-1, row, row+1]:
 				if (x >= 0 and y >= 0) and (x < self.__colDimension and 
-				y < self.__rowDimension) and (x != colX or y != rowY):
+				y < self.__rowDimension) and (x != col or y != row):
 					if self.board[y][x][0] == 'M':
 						count += 1
 		return count
