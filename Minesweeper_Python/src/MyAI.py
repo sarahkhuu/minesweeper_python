@@ -129,12 +129,13 @@ class MyAI( AI ):
 		""" 
 		get label helper function
 			input - 
-				x: int column index
-				y: int row index			
+				x (int): column index
+				y (int): row index			
 			return -  
-				label: 	* = Covered/Unmarked
-						M = Mine(Covered/Marked)
-						n = label(Uncovered)
+				label (string/int): 
+					* = Covered/Unmarked
+					M = Mine(Covered/Marked)
+					n = label(Uncovered)
 		"""
 		return self.board[y][x][0]
 
@@ -143,10 +144,10 @@ class MyAI( AI ):
 		get effective label helper function
 		Effective Label = Label - NumMarkedNeighbors
 			input - 
-				x: int column index
-				y: int row index
+				x (int): column index
+				y (int): row index
 			return - 
-				int EffectiveLabel: Label - NumMarkedNeighbors
+				EffectiveLabel (int): Label - NumMarkedNeighbors
 		"""
 		return self.board[y][x][1]
 
@@ -154,9 +155,9 @@ class MyAI( AI ):
 		""" 
 		get number of Unmarked Neighbor helper function
 			input - 
-				x: int column index
-				y: int row index		
-				NumUnmarkedNeighbors: int
+				x (int): column index
+				y (int): row index		
+				NumUnmarkedNeighbors (int): number of unmarked neighbors
 		"""
 		return self.board[y][x][2]
 
@@ -164,8 +165,8 @@ class MyAI( AI ):
 		"""
 		checks if effectivelabel(x) = numUnMarkedNeighbors on last x, y
 			input - 
-				x: int column index
-				y: int row index
+				x (int): column index
+				y (int): row index
 		"""
 		if self.getEffectiveLabel(x, y) == self.getNumUnmarkedNeighbors(x, y):
 			self.FlagAdjacent(x, y)
@@ -175,8 +176,8 @@ class MyAI( AI ):
 		"""
 		flag adjacent tiles as mines, label with 'M'
 			input - 
-				col: int column index
-				row: int row index
+				col (int): column index
+				row (int): row index
 		"""
 		for x in [col-1, col, col+1]:
 			for y in [row-1, row, row+1]:
@@ -191,8 +192,8 @@ class MyAI( AI ):
 		""" 
 		update effective label of flagged 'M' Tile
 			input - 
-				col: int column index
-				row: int row index
+				col (int): column index
+				row (int): row index
 		"""
 		for x in [col-1, col, col+1]:
 			for y in [row-1, row, row+1]:
@@ -206,9 +207,9 @@ class MyAI( AI ):
 		""" 
 		updates (colX, rowY)'s neighbors' adjacent covered tile number 
 			input - 
-				col: int column index
-				row: int row index
-				number: int uncovered label 
+				col (int): column index
+				row (int): row index
+				number (int): uncovered label 
 		"""
 		if (number == 0): 	# all neighbors are safe, add to safe
 			for x in [col-1, col, col+1]: 
@@ -238,8 +239,8 @@ class MyAI( AI ):
 		"""
 		decrement the internal adjacent covered tile counter
 			input - 
-				x: int column index
-				y: int row index
+				x (int): column index
+				y (int): row index
 		"""
 		self.board[y][x][2] -= 1
 
@@ -247,8 +248,8 @@ class MyAI( AI ):
 		"""
 		decrement effective label by 1
 			input - 
-				x: int column index
-				y: int row index
+				x (int): column index
+				y (int): row index
 		"""
 		if self.board[y][x][1]:
 			self.board[y][x][1] -= 1
@@ -266,33 +267,31 @@ class MyAI( AI ):
 	
 	def _updateBoard(self, x: int, y: int, number: int) -> None:
 		"""
-		update board with previous uncover of x, y tile
+		update board after uncover(x, y)
 			input - 
-				x: int column index
-				y: int row index
-				number: int uncovered label
+				x (int): column index
+				y (int): row index
+				number (int): uncovered label
 		"""
 		# update label
 		self.board[y][x][0] = number
 		
 		# update effective label
-		self.board[y][x][1] = number 
-		- self._numMarkedNeighbors(x, y)
+		self.board[y][x][1] = number - self._numMarkedNeighbors(x, y)
 
 		# update neighbor's numCovered (following UNCOVER)
 		self._updateNeighbors(x, y, number)
 		# self._view()
 
-		
 
 	def _numMarkedNeighbors(self, col: int, row: int) -> int:
 		"""
 		calculate number of neighbors with M mine
 			input - 
-				col: int column index
-				row: int row index
+				col (int): column index
+				row (int): row index
 			return -
-				count: int number of neighbor mines
+				count (int): number of neighbor mines
 		"""
 		count = 0
 		for x in [col-1, col, col+1]: 
@@ -302,7 +301,6 @@ class MyAI( AI ):
 					if self.board[y][x][0] == 'M':
 						count += 1
 		return count
-
 
 	def _view(self) -> None:
 		"""prints board with row and col index 1 less than game board"""
