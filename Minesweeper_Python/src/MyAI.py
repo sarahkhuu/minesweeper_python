@@ -73,7 +73,7 @@ class MyAI( AI ):
 
 		# update board (using previous getAction result)
 		self._updateBoard(self.__lastX, self.__lastY, number)
-		print("Covered Tiles left: ", self.coveredTilesLeft)
+		# print("Covered Tiles left: ", self.coveredTilesLeft)
 
 		# rule of thumb
 		if self.getEffectiveLabel(self.__lastX, self.__lastY) == \
@@ -231,7 +231,7 @@ class MyAI( AI ):
 							if ((x, y) not in self.__frontier and
 								self.getLabel(x, y) == '*'):
 								self.__frontier.update({(x,y):self.board[y][x]})
-		print(self.__frontier)
+		# print(self.__frontier)
 	
 	def _effectiveZero(self, col: int, row: int, uncover = False) -> None:
 		"""
@@ -322,7 +322,7 @@ class MyAI( AI ):
 
 		# update neighbor's numCovered (following UNCOVER)
 		self._updateNeighbors(x, y, number)
-		self._view()
+		# self._view()
 
 
 	def _numMarkedNeighbors(self, col: int, row: int) -> int:
