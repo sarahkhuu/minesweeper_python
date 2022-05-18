@@ -400,26 +400,26 @@ class MyAI( AI ):
 
 	def modelCheck(self) -> dict:
 
-		variables = list()
-		frontier_uncovered = dict()
+		variables = list() #list of covered frontier tiles
+		frontier_uncovered = dict() #uncovered frontier tiles mapping to list of unmarked neighbors
 		for tile in self.__frontier:
 
 			if self.board[tile[1]][tile[0]][0] == '*':
 				variables.append(tile)
 		
-		for tile in variables:
+		for tile in variables: #get uncovered frontier tiles (constraint tiles)
 			uncovered = self.getUncoveredNeighbors(tile[0], tile[1])
 			for neighbor in uncovered:
 				if neighbor not in frontier_uncovered:
 					frontier_uncovered[neighbor] = list()
 
-		for tile in frontier_uncovered:
+		for tile in frontier_uncovered: #append covered tiles in frontier to tile in frontier_uncovered if it is a neighbor
 			frontier_uncovered[tile] = self.unmarkedNeighbors(tile[0], tile[1])
-			#append covered tiles in frontier to tile in frontier_uncovered if it is a neighbor
+			
 
 		assignment = dict()
 		var_num = len(variables)
-		solution_dict = dict()
+		solution_dict = dict() #counts how many times a tile is a mine in a given solution
 		models = self.getSolutions(assignment, frontier_uncovered, variables, var_num)
 		num_of_solutions = len(models)
 
@@ -438,18 +438,22 @@ class MyAI( AI ):
 		for tile in solution_dict:
 			if (solution_dict[tile]/num_of_solutions) == 1: #if tile was assigned a mine in every solution, append to mines list
 				solutions[1].append(tile)
-			elif (solution_dict[tile]/num_of_solutions) == 0: #if tile was always safe in every solution, append to safe list
+			elif (solution_dict[tile]/num_of_solutions) == 0: #if tile was safe in every solution, append to safe list
 				solutions[0].append(tile)
 
 		return solutions
 
 	def satisfyConstraint(self, variables, constraint):
+		'''
+		given an assignment of variables, check if that assignment satisifies given constraints. return false if constraints 
+		are violated. 
+		'''
 		for c in constraint:
 			sum = 0 
 			num = len(constraint[c])
 			i = 0
 			x, y = c
-			label = self.getEffectiveLabel(x, y)
+			label = self.getEffectiveLabel(x, y) #effective label acts as constraint
 			for var in constraint[c]:
 				if var in variables:
 					sum += variables[var]
@@ -462,24 +466,28 @@ class MyAI( AI ):
 	
 	def getSolutions(self, assign, constraints, vars, num) -> list:
 		'''
-		recursive solver, that assigns variables and checks constraints on each assignment. When a complete assignment is reached, it is added to 
+		recursive solver, assigns variables and checks constraints on each assignment. When a complete assignment is reached, it is added to 
 		the solutions list. solutions list is returned
 		'''
-		solutions = []
+		solutions = [] #list of variable assignments that satisfy constraints
 	
 		if num == 0:
-			return [assign]
+			return [assign] #if num is 0, then all variables have been assigned and the current assignment satisifes all constraints
 		
 		for v in vars: 
+			#for each variable, assign it if it hasn't been assigned
 			if v in assign: 
 				continue
 			assign[v] = 0
-			if self.satisfyConstraint(assign, constraints):
+			#check if assignment satisfies constraint
+			#if constraints not violated, copy current assignment and continue assigning variables in recursive call
+			if self.satisfyConstraint(assign, constraints): 
 				assign_copy = assign.copy()
 				solutions += self.getSolutions(assign_copy, constraints, vars, num-1)
 			assign[v] = 1
 			if self.satisfyConstraint(assign, constraints):
 				assign_copy = assign.copy()
 				solutions += self.getSolutions(assign_copy, constraints, vars, num-1)
+
 			return solutions		
 				
