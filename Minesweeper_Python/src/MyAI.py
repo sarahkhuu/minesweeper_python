@@ -81,6 +81,23 @@ class MyAI( AI ):
 			self.FlagAdjacent(self.__lastX, self.__lastY)
 			# flag all adjacent covered tiles as mines
 		
+		
+		#if rules of thumb don't yield results, model check
+		if self.__frontier and not self.__safe: 
+			check = self.modelCheck()
+			#check[0] is list of safe tiles
+			for tile in check[0]:
+				if tile not in self.__safe:
+					self.__safe[tile] = self.board[tile[1]][tile[0]]
+			#check[1] is list of mine tiles, flag each mine tile and update flagNeighbors
+			for tile in check[1]:
+				flag_x, flag_y = tile[0], tile[1]
+				self.board[flag_y][flag_x][0] = 'M'
+				self.board[flag_y][flag_x][1] = None
+				self._updateFlagNeighbors(flag_x, flag_y)
+				if tile in self.__frontier:
+					self.__frontier.pop(tile)
+		''''''
 		global totalTimeElapsed 
 		remainingTime = totalTime - totalTimeElapsed
 		if remainingTime < 3:
@@ -368,4 +385,101 @@ class MyAI( AI ):
 			else:
 				print('  {col}'.format(col = col), end='\t')
 		print(end = '\n')
-			
+	
+
+	def getUncoveredNeighbors(self, colX: int, rowY:int) -> list:
+		'''given tile (x, y), return all its neighbors that have been uncovered'''
+		neighbors = list()
+		for x in [colX-1, colX, colX+1]: 
+			for y in [rowY-1, rowY, rowY+1]:
+				if (x >= 0 and y >= 0) and (x < self.__colDimension and 
+				y < self.__rowDimension) and (x != colX or y != rowY):
+					if (self.board[y][x][0] != '*' and self.board[y][x][0] != 'M'):
+						neighbors.append((x, y))
+		return neighbors
+
+	def modelCheck(self) -> dict:
+
+		variables = list()
+		frontier_uncovered = dict()
+		for tile in self.__frontier:
+
+			if self.board[tile[1]][tile[0]][0] == '*':
+				variables.append(tile)
+		
+		for tile in variables:
+			uncovered = self.getUncoveredNeighbors(tile[0], tile[1])
+			for neighbor in uncovered:
+				if neighbor not in frontier_uncovered:
+					frontier_uncovered[neighbor] = list()
+
+		for tile in frontier_uncovered:
+			frontier_uncovered[tile] = self.unmarkedNeighbors(tile[0], tile[1])
+			#append covered tiles in frontier to tile in frontier_uncovered if it is a neighbor
+
+		assignment = dict()
+		var_num = len(variables)
+		solution_dict = dict()
+		models = self.getSolutions(assignment, frontier_uncovered, variables, var_num)
+		num_of_solutions = len(models)
+
+		for v in variables:
+			solution_dict[v] = 0
+
+		solutions = dict()
+		solutions[0] = list() #list of tiles that are guaranteed safe
+		solutions[1] = list() #list of tiles that are guaranteed mines
+
+		for solution in models:
+			for tile in solution_dict:
+				if solution[tile] == 1: #each time tile is assigned 1 (mine), update solution_dict 
+					solution_dict[tile] += 1
+	
+		for tile in solution_dict:
+			if (solution_dict[tile]/num_of_solutions) == 1: #if tile was assigned a mine in every solution, append to mines list
+				solutions[1].append(tile)
+			elif (solution_dict[tile]/num_of_solutions) == 0: #if tile was always safe in every solution, append to safe list
+				solutions[0].append(tile)
+
+		return solutions
+
+	def satisfyConstraint(self, variables, constraint):
+		for c in constraint:
+			sum = 0 
+			num = len(constraint[c])
+			i = 0
+			x, y = c
+			label = self.getEffectiveLabel(x, y)
+			for var in constraint[c]:
+				if var in variables:
+					sum += variables[var]
+					i += 1
+			if i == num and sum != label:
+				return False
+			elif i < num and sum > label:
+				return False
+		return True
+	
+	def getSolutions(self, assign, constraints, vars, num) -> list:
+		'''
+		recursive solver, that assigns variables and checks constraints on each assignment. When a complete assignment is reached, it is added to 
+		the solutions list. solutions list is returned
+		'''
+		solutions = []
+	
+		if num == 0:
+			return [assign]
+		
+		for v in vars: 
+			if v in assign: 
+				continue
+			assign[v] = 0
+			if self.satisfyConstraint(assign, constraints):
+				assign_copy = assign.copy()
+				solutions += self.getSolutions(assign_copy, constraints, vars, num-1)
+			assign[v] = 1
+			if self.satisfyConstraint(assign, constraints):
+				assign_copy = assign.copy()
+				solutions += self.getSolutions(assign_copy, constraints, vars, num-1)
+			return solutions		
+				
