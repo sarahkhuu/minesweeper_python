@@ -17,8 +17,7 @@ from Action import Action
 import time
 import random
 
-totalTime = 10.0 		# seconds allowed for one game
-totalTimeElapsed = 0.0
+totalTime = 300.0 		# seconds allowed for one game
 
 class MyAI( AI ):
 
@@ -40,6 +39,7 @@ class MyAI( AI ):
 		self.__safe = {}		# dictionary (x, y):[a,b,c]
 		self.__uncovered = {}
 		self.guess = {}
+		self.__totalTimeElapsed = 0.0 # timer
 
 		# */M/n : Effective Label : # adjacent covered/unmarked tiles
 		# * = Covered/Unmarked / M = Mine(Covered/Marked) / n = label(Uncovered)
@@ -105,9 +105,8 @@ class MyAI( AI ):
 				for tile in check[2]:
 					self.guess[tile] = self.board[tile[1]][tile[0]]
 		''''''
-		global totalTimeElapsed 
-		remainingTime = totalTime - totalTimeElapsed
-		if remainingTime < 3:
+		remainingTime = totalTime - self.__totalTimeElapsed
+		if remainingTime < 2:
 			# random move
 			action = AI.Action(1)
 			x = random.randrange(self.__colDimension)
@@ -145,8 +144,8 @@ class MyAI( AI ):
 			self.__lastY = y
 
 			timeEnd = time.time()
-			timeDifference = timeStart - timeEnd
-			totalTimeElapsed += timeDifference	# update time used for call
+			timeDifference = timeEnd - timeStart
+			self.__totalTimeElapsed += timeDifference	# update time used for call
 
 			return Action(action, x, y)
 
