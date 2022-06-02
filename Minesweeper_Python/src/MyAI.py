@@ -415,16 +415,17 @@ class MyAI( AI ):
 	
 		variables = list() #list of covered frontier tiles
 		frontier_uncovered = dict() #uncovered frontier tiles mapping to list of unmarked neighbors
+		
 		#for tile in self.__frontier:
-
 			#if self.board[tile[1]][tile[0]][0] == '*':
 				#variables.append(tile)
-				#break
-		
+			#	break
+		variables = self.getCoveredFrontiers()
 		start = self.__frontier.popitem()
 		self.__frontier.update({start[0]:start[1]})
 		starting_tile = start[0]
 		#frontier_uncovered[starting_tile] = list()
+		'''
 		variables.append(starting_tile)
 		x = list()
 		x.append(starting_tile)
@@ -435,7 +436,7 @@ class MyAI( AI ):
 				if n in self.__frontier and n not in variables:
 					variables.append(n)
 					x.append(n)
-
+		'''
 		for tile in variables: #get uncovered frontier tiles (constraint tiles)
 			uncovered = self.getUncoveredNeighbors(tile[0], tile[1])
 			for neighbor in uncovered:
@@ -529,4 +530,31 @@ class MyAI( AI ):
 				solutions += self.getSolutions(assign_copy, constraints, vars, num-1)
 
 			return solutions		
-				
+
+	def getCoveredFrontiers(self) -> list:
+		final_frontier = list()
+		if len(self.__frontier) < 20:
+			return self.__frontier
+
+		frontier_copy = self.__frontier.copy()
+		for tile in self.__frontier:
+			if tile not in frontier_copy:
+				continue
+			starting_tile = tile
+			frontier_copy.pop(tile)
+			current_frontier = list()
+			current_frontier.append(starting_tile)
+			f = list()
+			f.append(starting_tile)
+			while f:
+				tile = f.pop()
+				neighbors = self.unmarkedNeighbors(tile[0], tile[1])
+				for n in neighbors:
+					if n in frontier_copy and n not in current_frontier:
+						current_frontier.append(n)
+						f.append(n)
+			if len(current_frontier) < 20:
+				final_frontier.append(current_frontier)
+
+		return max(final_frontier, key = lambda x: len(x))
+		
