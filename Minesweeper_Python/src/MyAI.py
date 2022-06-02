@@ -31,12 +31,15 @@ class MyAI( AI ):
 		self.__rowDimension = rowDimension
 		self.__colDimension = colDimension
 		self.totalMines = totalMines
+		self.minesLeft = totalMines
 		self.coveredTilesLeft = rowDimension * colDimension
 		self.board = list() 	# list of list of lists
 		self.__lastX = startX	# x = column coordinate
 		self.__lastY = startY	# y = row coordinate
 		self.__frontier = {}	# dictionary (x, y):[a,b,c]
 		self.__safe = {}		# dictionary (x, y):[a,b,c]
+		self.__uncovered = {}
+		self.guess = {}
 
 		# */M/n : Effective Label : # adjacent covered/unmarked tiles
 		# * = Covered/Unmarked / M = Mine(Covered/Marked) / n = label(Uncovered)
@@ -74,7 +77,7 @@ class MyAI( AI ):
 		# update board (using previous getAction result)
 		self._updateBoard(self.__lastX, self.__lastY, number)
 		# print("Covered Tiles left: ", self.coveredTilesLeft)
-
+		
 		# rule of thumb
 		if self.getEffectiveLabel(self.__lastX, self.__lastY) == \
 			self.getNumUnmarkedNeighbors(self.__lastX, self.__lastY):
@@ -83,7 +86,7 @@ class MyAI( AI ):
 		
 		
 		#if rules of thumb don't yield results, model check
-		if self.__frontier and not self.__safe: 
+		if self.__frontier and self.__uncovered and not self.__safe: 
 			check = self.modelCheck()
 			#check[0] is list of safe tiles
 			for tile in check[0]:
@@ -94,9 +97,13 @@ class MyAI( AI ):
 				flag_x, flag_y = tile[0], tile[1]
 				self.board[flag_y][flag_x][0] = 'M'
 				self.board[flag_y][flag_x][1] = None
+				self.minesLeft -= 1
 				self._updateFlagNeighbors(flag_x, flag_y)
 				if tile in self.__frontier:
 					self.__frontier.pop(tile)
+			if len(check[2]) != 0:
+				for tile in check[2]:
+					self.guess[tile] = self.board[tile[1]][tile[0]]
 		''''''
 		global totalTimeElapsed 
 		remainingTime = totalTime - totalTimeElapsed
@@ -124,11 +131,14 @@ class MyAI( AI ):
 					else:
 						x, y = self.__frontier.popitem()[0]
 			else:
-				x = random.randrange(self.__colDimension)
-				y = random.randrange(self.__rowDimension)
+				if self.guess:
+					x, y = self.guess.popitem()[0]
+				else:
+					x = random.randrange(self.__colDimension)
+					y = random.randrange(self.__rowDimension)
 
 				# print("x, y: ", x, y)
-			 
+			self.guess.clear() 
 			self.coveredTilesLeft -= 1
 
 			self.__lastX = x
@@ -207,6 +217,7 @@ class MyAI( AI ):
 					self.board[y][x][0] = 'M'
 					self.board[y][x][1] = None
 					self._updateFlagNeighbors(x, y)
+					self.minesLeft -= 1
 
 	def _updateFlagNeighbors(self, col: int, row: int) -> None:
 		""" 
@@ -248,6 +259,7 @@ class MyAI( AI ):
 							if ((x, y) not in self.__frontier and
 								self.getLabel(x, y) == '*'):
 								self.__frontier.update({(x,y):self.board[y][x]})
+			self.__uncovered.update({(col, row):self.board[row][col]})
 		# print(self.__frontier)
 	
 	def _effectiveZero(self, col: int, row: int, uncover = False) -> None:
@@ -296,6 +308,8 @@ class MyAI( AI ):
 				y (int): row index
 		"""
 		self.board[y][x][2] -= 1
+		if self.board[y][x][2] == 0 and (x, y) in self.__uncovered:
+			self.__uncovered.pop((x, y))
 		self._checkRule(x, y)
 
 	def _updateEffectiveLabel(self, x: int, y:int) -> None:
@@ -339,7 +353,7 @@ class MyAI( AI ):
 
 		# update neighbor's numCovered (following UNCOVER)
 		self._updateNeighbors(x, y, number)
-		# self._view()
+		#self._view()
 
 
 	def _numMarkedNeighbors(self, col: int, row: int) -> int:
@@ -399,14 +413,30 @@ class MyAI( AI ):
 		return neighbors
 
 	def modelCheck(self) -> dict:
-
+	
 		variables = list() #list of covered frontier tiles
 		frontier_uncovered = dict() #uncovered frontier tiles mapping to list of unmarked neighbors
-		for tile in self.__frontier:
+		#for tile in self.__frontier:
 
-			if self.board[tile[1]][tile[0]][0] == '*':
-				variables.append(tile)
+			#if self.board[tile[1]][tile[0]][0] == '*':
+				#variables.append(tile)
+				#break
 		
+		start = self.__frontier.popitem()
+		self.__frontier.update({start[0]:start[1]})
+		starting_tile = start[0]
+		#frontier_uncovered[starting_tile] = list()
+		variables.append(starting_tile)
+		x = list()
+		x.append(starting_tile)
+		while x:
+			tile = x.pop()
+			neighbors = self.unmarkedNeighbors(tile[0], tile[1])
+			for n in neighbors:
+				if n in self.__frontier and n not in variables:
+					variables.append(n)
+					x.append(n)
+
 		for tile in variables: #get uncovered frontier tiles (constraint tiles)
 			uncovered = self.getUncoveredNeighbors(tile[0], tile[1])
 			for neighbor in uncovered:
@@ -414,9 +444,12 @@ class MyAI( AI ):
 					frontier_uncovered[neighbor] = list()
 
 		for tile in frontier_uncovered: #append covered tiles in frontier to tile in frontier_uncovered if it is a neighbor
+			covered = self.unmarkedNeighbors(tile[0], tile[1])
+			for c in covered:
+				if c not in variables:
+					variables.append(c)
 			frontier_uncovered[tile] = self.unmarkedNeighbors(tile[0], tile[1])
 			
-
 		assignment = dict()
 		var_num = len(variables)
 		solution_dict = dict() #counts how many times a tile is a mine in a given solution
@@ -429,6 +462,7 @@ class MyAI( AI ):
 		solutions = dict()
 		solutions[0] = list() #list of tiles that are guaranteed safe
 		solutions[1] = list() #list of tiles that are guaranteed mines
+		solutions[2] = list() #list containing tile that is most likely to be safe
 
 		for solution in models:
 			for tile in solution_dict:
@@ -440,6 +474,11 @@ class MyAI( AI ):
 				solutions[1].append(tile)
 			elif (solution_dict[tile]/num_of_solutions) == 0: #if tile was safe in every solution, append to safe list
 				solutions[0].append(tile)
+
+		if len(solutions[0]) == 0 and len(solutions[1]) == 0:
+			#if no tile is guaranteed safe or mine, find tile most likely to be safe
+			guessTile = min(solution_dict, key = lambda x: x[1])
+			solutions[2].append(guessTile)
 
 		return solutions
 
@@ -479,12 +518,13 @@ class MyAI( AI ):
 			if v in assign: 
 				continue
 			assign[v] = 0
-			#check if assignment satisfies constraint
+			#check if assignment of 0 satisfies constraint
 			#if constraints not violated, copy current assignment and continue assigning variables in recursive call
 			if self.satisfyConstraint(assign, constraints): 
 				assign_copy = assign.copy()
-				solutions += self.getSolutions(assign_copy, constraints, vars, num-1)
+				solutions += self.getSolutions(assign_copy, constraints, vars, num-1) 
 			assign[v] = 1
+			#check if assigning the variable to 1 satisfies constraint
 			if self.satisfyConstraint(assign, constraints):
 				assign_copy = assign.copy()
 				solutions += self.getSolutions(assign_copy, constraints, vars, num-1)
