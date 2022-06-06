@@ -40,6 +40,7 @@ class MyAI( AI ):
 		self.__uncovered = {}
 		self.guess = {}
 		self.__totalTimeElapsed = 0.0 # timer
+		self.__totalUncovered = 0
 
 		# */M/n : Effective Label : # adjacent covered/unmarked tiles
 		# * = Covered/Unmarked / M = Mine(Covered/Marked) / n = label(Uncovered)
@@ -75,6 +76,7 @@ class MyAI( AI ):
 			return Action(AI.Action.LEAVE)
 
 		# update board (using previous getAction result)
+		self.__totalUncovered += 1
 		self._updateBoard(self.__lastX, self.__lastY, number)
 		# print("Covered Tiles left: ", self.coveredTilesLeft)
 		
@@ -412,31 +414,19 @@ class MyAI( AI ):
 		return neighbors
 
 	def modelCheck(self) -> dict:
-	
+		'''
+		create list of variables (covered frontier tiles) and dict of constraints (uncovered frontier tiles)
+		using variables and constraints, get all possible models and extract guaranteed safe and mine tiles,
+		or tile that is most likely safe
+		'''
 		variables = list() #list of covered frontier tiles
 		frontier_uncovered = dict() #uncovered frontier tiles mapping to list of unmarked neighbors
 		
-		#for tile in self.__frontier:
-			#if self.board[tile[1]][tile[0]][0] == '*':
-				#variables.append(tile)
-			#	break
-		variables = self.getCoveredFrontiers()
+		variables = self.getCoveredFrontiers() #get a frontier
 		start = self.__frontier.popitem()
 		self.__frontier.update({start[0]:start[1]})
 		starting_tile = start[0]
-		#frontier_uncovered[starting_tile] = list()
-		'''
-		variables.append(starting_tile)
-		x = list()
-		x.append(starting_tile)
-		while x:
-			tile = x.pop()
-			neighbors = self.unmarkedNeighbors(tile[0], tile[1])
-			for n in neighbors:
-				if n in self.__frontier and n not in variables:
-					variables.append(n)
-					x.append(n)
-		'''
+		
 		for tile in variables: #get uncovered frontier tiles (constraint tiles)
 			uncovered = self.getUncoveredNeighbors(tile[0], tile[1])
 			for neighbor in uncovered:
@@ -452,7 +442,7 @@ class MyAI( AI ):
 			
 		assignment = dict()
 		var_num = len(variables)
-		solution_dict = dict() #counts how many times a tile is a mine in a given solution
+		solution_dict = dict() #dict keeping counts of how many times a tile is a mine in a given solution
 		models = self.getSolutions(assignment, frontier_uncovered, variables, var_num)
 		num_of_solutions = len(models)
 
@@ -475,11 +465,11 @@ class MyAI( AI ):
 			elif (solution_dict[tile]/num_of_solutions) == 0: #if tile was safe in every solution, append to safe list
 				solutions[0].append(tile)
 
-		if len(solutions[0]) == 0 and len(solutions[1]) == 0:
+		if len(solutions[0]) == 0 and len(solutions[1]) == 0 and models is not None:
 			#if no tile is guaranteed safe or mine, find tile most likely to be safe
 			guessTile = min(solution_dict, key = lambda x: x[1])
 			solutions[2].append(guessTile)
-
+					
 		return solutions
 
 	def satisfyConstraint(self, variables, constraint):
@@ -532,28 +522,29 @@ class MyAI( AI ):
 			return solutions		
 
 	def getCoveredFrontiers(self) -> list:
+		#look through frontier and find largest frontier that doesn't have more than 24 tiles
 		final_frontier = list()
-		if len(self.__frontier) < 20:
+		if len(self.__frontier) < 25:
 			return self.__frontier
 
 		frontier_copy = self.__frontier.copy()
 		for tile in self.__frontier:
 			if tile not in frontier_copy:
 				continue
-			starting_tile = tile
+			starting_tile = tile #get a starting tile
 			frontier_copy.pop(tile)
-			current_frontier = list()
+			current_frontier = list() #list that contains tiles neighboring starting tile
 			current_frontier.append(starting_tile)
 			f = list()
 			f.append(starting_tile)
-			while f:
-				tile = f.pop()
+			while f: #get neighbors of starting tile and add to frontier
+				tile = f.pop() 
 				neighbors = self.unmarkedNeighbors(tile[0], tile[1])
 				for n in neighbors:
 					if n in frontier_copy and n not in current_frontier:
 						current_frontier.append(n)
 						f.append(n)
-			if len(current_frontier) < 20:
+			if len(current_frontier) < 25: #if frontier is < 25 tiles, append to frontier list
 				final_frontier.append(current_frontier)
 
 		return max(final_frontier, key = lambda x: len(x))
